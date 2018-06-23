@@ -11,48 +11,89 @@
  *
  * @author robert
  */
-class MainController extends BaseObject {
-    private $access_token = '';
-
-
-    private $getConversations = 'https://api.vk.com/method/messages.getConversations?v=5.41&access_token=:token&count=200&offset=0';
-        
-    private $getHistory = 'https://api.vk.com/method/messages.getHistory?v=5.41&peer_id=:id&access_token=:token&count=200&offset=0';
-        
+class MainController extends BaseObject
+{
+    private $intervals = [];
+    private $more15min = [];
     
-    public function actionIndex(){
-        $this->getConversations = str_replace(':token', $this->access_token, $this->getConversations);
-        $this->getHistory = str_replace(':token', $this->access_token, $this->getHistory);
+    private $conversations = 'https://api.vk.com/method/messages.getConversations?v=5.41&access_token=:token&count=200&offset=0';
+    private $history = 'https://api.vk.com/method/messages.getHistory?v=5.41&peer_id=:peer_id&access_token=:token&count=200&offset=0';
+    
+    public function actionIndex()
+    {
+        $postToken = $_POST['token'];
+        $postGroup = $_POST['group'];
+        $postDate  = $_POST['date'];
         
-        $data = self::decodeData($this->getConversations);
-        
-        $date = date('Y-m-d', 1529699175);
-        
-        $array_data ;
-        $previous_message = '';
-        
-        $i = 0;
-        foreach ($data->response->items as $items )
+        if (empty($postToken) === TRUE || empty($postGroup) === TRUE || empty($postDate) === TRUE)
         {
-            $str = str_replace(':id', $items->conversation->peer->id, $this->getHistory);
-            foreach (self::decodeData($str) as $all_message)
+            $this->render('index', [
+                'displayResult' => FALSE
+            ]);
+            
+            return FALSE;
+        }
+        
+        $this->conversations = str_replace(':token', $postToken, $this->conversations);
+        $this->history = str_replace(':token', $postToken, $this->history);
+        
+        $conversations = self::apiRequest($this->conversations);
+    
+        foreach ($conversations->response->items as $conversation)
+        {
+            $lastMessageTime = time() - $conversation->last_message->date;
+    
+            if ($lastMessageTime > 900 && $conversation->last_message->out === 0 && date('Y-m-d', $conversation->last_message->date) === $postDate)
             {
-                foreach ($all_message->items as $messages){
-                    if(date('Y-m-d',$messages->date) == $date && $messages->from_id == 155194754){
-                        $answer = $messages;
-                        
-                        $array_data = ($answer->date - $previous_message->date);
-                    }
-                    
-                    $previous_message = $messages;
-                    $i++;
+                $this->more15min[] = [
+                    'lastMessageTime' => $lastMessageTime,
+                    'messageText' => $conversation->last_message->text,
+                    'peerId' => $conversation->last_message->peer_id
+                ];
+            }
+    
+            $historyUrl = str_replace(':peer_id', $conversation->conversation->peer->id, $this->history);
+            $history = self::apiRequest($historyUrl);
+            
+            $adminAnswerTime = $userQuestionTime = NULL;
+            
+            foreach (array_reverse($history->response->items) as $message)
+            {
+                if (date('Y-m-d', $message->date) !== $postDate)
+                {
+                    continue;
+                }
+    
+                if ($message->out === 1)
+                {
+                    $adminAnswerTime = $message->date;
+                }
+                else
+                {
+                    $userQuestionTime = $message->date;
+                }
+                
+                if ($adminAnswerTime !== NULL && $userQuestionTime !== NULL)
+                {
+                    $this->intervals[] = $adminAnswerTime - $userQuestionTime;
+    
+                    $adminAnswerTime = $userQuestionTime = NULL;
                 }
             }
         }
+    
+        $middleTime = array_sum($this->intervals) / count($this->intervals);
+        $maxTime = max($this->intervals);
+        $minTime = min($this->intervals);
         
-        var_dump(date('Y-m-d H:i:s',$array_data)); 
-        
-//        $this->render('index', compact('array'));
+        $this->render('index', [
+            'more15min' => $this->more15min,
+            'middleTime' => $middleTime,
+            'maxTime' => $maxTime,
+            'minTime' => $minTime,
+            'groupId' => $postGroup,
+            'displayResult' => TRUE
+        ]);
     }
     
     /**
@@ -61,7 +102,10 @@ class MainController extends BaseObject {
      * @param type $data
      * @return type
      */
-    public static function decodeData($data){
-        return json_decode(file_get_contents($data));
+    public static function apiRequest($url)
+    {
+        $data = file_get_contents($url);
+        
+        return json_decode($data);
     }
 }

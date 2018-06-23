@@ -59,4 +59,37 @@ class BaseObject
     $content = $this->renderPartial($filename,$variables,false);
     return $this->_renderPartial($this->tplPath.'main.php',array_merge(array('content'=>$content),$variables),$output);
   }
+   
+   public static function formatTime( $time )
+    {
+        $result = null;
+        
+        $t = array
+        (
+            array( 31536000, " г. " ),
+            array( 86400, " д. " ),
+            array( 3600, " ч. " ),
+            array( 60, " м. " ),
+            array( 1, " с." )
+        );
+        
+        for( $x = 0; $x < count( $t ); $x++ )
+        {
+            if( $time >= $t[$x][0] )
+            {
+                $y = floor( $time / $t[$x][0] );
+                $time = $time - ( $t[$x][0] * $y );
+                $result .= $y . $t[$x][1];
+            }
+            else
+            {
+                if( ( $result != null and $time > 0 ) or ( $x == ( count( $t ) - 1 ) and $result == null ) )
+                {
+                    $result .= "0". $t[$x][1];
+                }
+            }
+        }
+        
+        return $result;
+    }
 }
