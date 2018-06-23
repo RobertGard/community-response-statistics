@@ -60,18 +60,24 @@ class BaseObject
     return $this->_renderPartial($this->tplPath.'main.php',array_merge(array('content'=>$content),$variables),$output);
   }
    
+  /**
+   * Форматирование даты
+   * 
+   * @param type $time
+   * @return string
+   */
+  
    public static function formatTime( $time )
     {
         $result = null;
         
-        $t = array
-        (
-            array( 31536000, " г. " ),
-            array( 86400, " д. " ),
-            array( 3600, " ч. " ),
-            array( 60, " м. " ),
-            array( 1, " с." )
-        );
+        $t = [
+            [ 31536000, " г. " ],
+            [ 86400, " д. " ],
+            [ 3600, " ч. " ],
+            [ 60, " м. " ],
+            [ 1, " с." ]
+        ];
         
         for( $x = 0; $x < count( $t ); $x++ )
         {

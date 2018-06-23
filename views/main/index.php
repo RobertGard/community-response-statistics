@@ -1,15 +1,34 @@
-<form method="POST">
-    <input type="text" name="token" value="<?= $_POST['token'] ?>"/>
-    <br/>
-    <input type="text" name="group" value="<?= $_POST['group'] ?>"/>
-    <br/>
-    <input type="date" name="date" value="<?= $_POST['date'] ?>">
-    <br/>
-    <input type="submit">
-</form>
+<br>
+<br>
+
+<div class="container">
+    <div class="row">
+        <form method="POST">
+            <div class="form-group field-order-name required">
+                <label class="control-label" for="order-name">Токен подключения</label>
+                    <input type="text" name="token" value="<?= $_POST['token'] ?>" class="form-control" />
+            </div>
+            <div class="form-group field-order-name required">
+                <label class="control-label" for="order-name">ID группы</label>
+                    <input type="text" name="group" value="<?= $_POST['group'] ?>" class="form-control" />
+            </div>
+            <div class="form-group field-order-name required">
+                <label class="control-label" for="order-name">Дата</label>
+                    <input type="date" name="date" value="<?= $_POST['date'] ?>" class="form-control" >
+            </div>
+            <input type="submit" class="btn btn-success">
+        </form>
+    </div><!-- /.col-lg-6 -->
+    
+<br>
+<br>
 
 <?php if ($displayResult === TRUE) : ?>
-    <table border="1">
+
+    <br/><br/>
+        <h4>Статистика</h4>
+        
+    <table border="1" class="table table-hover table-striped">
         <tr>
             <td>Макс.</td>
             <td><?= BaseObject::formatTime($maxTime) ?></td>
@@ -25,10 +44,9 @@
     </table>
     
     <br/><br/>
-        Сообщения с момента которых прошло более 15 минут
-    <br/><br/>
+        <h4>Сообщения с момента которых прошло более 15 минут</h4>
     
-    <table border="1">
+    <table border="1" class="table table-hover table-striped">
         <thead>
             <th>#</th>
             <th>Сообщение</th>
@@ -47,3 +65,5 @@
         </tbody>
     </table>
 <?php endif ?>
+
+</div>
